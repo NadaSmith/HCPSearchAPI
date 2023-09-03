@@ -1,382 +1,170 @@
+// Define the port number for your Express.js server.
 const PORT = process.env.PORT || 3005;
-//initializing express
-const express = require('express');
-const axios = require('axios');
-const cheerio = require('cheerio');
 
-//calling express
+//Importing required modules
+const express = require('express');   //for building server
+const axios = require('axios');       //for making http requests
+const cheerio = require('cheerio');   //for web scraping
+const cache = require('memory-cache');   //for caching data
+
+//Create an instance of express
 const app = express();
 
 //app.use and app.get are examples of properties coming from express
 
 
-//array of articles that I want to scrape
-//make title lowercase bc it's case sensative
+
+//Define an array of journals to scrape. Each journal has a name, keyword, and page number.
 const journals = [
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200"
-
+        keyword: "hidradenitis",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=2"
-
+        keyword: "rheumatoidarthritis",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=3"
-
+        keyword: "migraine",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=4"
-
+        keyword: "diabetes",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=5"
-
+        keyword: "hypertension",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=6"
-
+        keyword: "asthma",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=7"
-
+        keyword: "depression",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=8"
-
+        keyword: "hiv",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=9"
-
+        keyword: "pneumonia",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=10"
-
+        keyword: "psoriasis",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=11"
-
+        keyword: "suicide",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=12"
-
+        keyword: "pregnancy",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=13"
-
+        keyword: "breastcancer",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=14"
-
+        keyword: "allergies",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=15"
-
+        keyword: "stroke",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=16"
-
+        keyword: "pancreatitis",
+        page: 1,
     },
     {
         name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=17"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=18"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=19"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=20"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=21"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=22"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=23"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=24"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=25"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=26"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=27"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=28"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=29"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=30"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=31"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=32"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=33"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=34"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=35"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=36"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=37"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=38"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=39"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=40"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=41"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=42"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=43"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=44"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=45"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=46"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=47"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=48"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=49"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=50"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=51"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=52"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=53"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=54"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=55"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=56"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=57"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=58"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=59"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=60"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=61"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=62"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=63"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=64"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=65"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=66"
-
-    },
-    {
-        name: "NIH%20National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=67"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=68"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=69"
-
-    },
-    {
-        name: "NIH National Library of Medicine",
-        address: "https://pubmed.ncbi.nlm.nih.gov/?term=rheumatoid%20arthritis&sort=date&size=200&page=70"
-    }
+        keyword: "tuberculosis",
+        page: 1,
+    }     
 ]
 
+//Function to generate search URLs based on journals keyword and page numbers
+function generateSearchURL(journal) {
+    let url = `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(journal.keyword)}&sort=date&size=200`;
 
-//scraping internet for information
-app.get('/news', (req, res) => {
+    //If it's not the first page, add the page number parameter.
+    if (journal.page > 1) {
+        url += `&page=${journal.page}`;
+    }
+
+    return url;
+}
+
+//Define cache key for storing scraped data
+const cacheKey = 'scrapedData';
+
+//Middleware to check the cache before scraping
+const cacheMiddleware = (req, res, next) => {
+    const cachedData = cache.get(cacheKey);
+  
+    if (cachedData) {
+      //If data is found in the cache, send it as the response
+      res.json(cachedData);
+    } else {
+      //If data is not in the cache, proceed with scraping
+      next();
+    }
+};
+
+//Define a route for the root endpoint. 
+app.get('/', (req, res) => {
+    res.json('Welcome to my Medical Articles API')
+})
+
+
+//Define a route for scraping journal articlesuses cache; uses Middleware to check for cached data.
+app.get('/journals', cacheMiddleware, (req, res) => {
     const articles = [];
 
+    //Create an array of promises for fetching data from multiple journals.
     const fetchPromises = journals.map(journal => {
-        return axios.get(journal.address)
+        return axios.get(generateSearchURL(journal))
             .then(response => {
                 const html = response.data;
                 const $ = cheerio.load(html);
                 const baseUrls = { "NIH National Library of Medicine": "https://pubmed.ncbi.nlm.nih.gov" };
 
+                //Use Cheerio to parse the HTML and extract rheumatoid arthritis article information.
                 $('a:contains("rheumatoid arthritis")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name,
+                        keyword: journal.keyword
+                    });
+                });
+
+                //Use Cheerio to parse the HTML and extract hidradenitis article information.
+                $('a:contains("hidradenitis")', html).each(function () {
                     const title = $(this).text().trim();
                     const relativeUrl = $(this).attr('href');
                     const absoluteUrl = baseUrls[journal.name] + relativeUrl;
@@ -387,6 +175,202 @@ app.get('/news', (req, res) => {
                         source: journal.name
                     });
                 });
+
+                //Use Cheerio to parse the HTML and extract migraine article information.
+                $('a:contains("migraine")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+
+                //Use Cheerio to parse the HTML and extract diabetes article information.
+                $('a:contains("diabetes")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+
+                //Use Cheerio to parse the HTML and extract hypertension article information.
+                $('a:contains("hypertension")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+
+                //Use Cheerio to parse the HTML and extract asthma article information.
+                $('a:contains("asthma")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+
+                //Use Cheerio to parse the HTML and extract depression article information.
+                $('a:contains("depression")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+
+                //Use Cheerio to parse the HTML and extract hiv article information.
+                $('a:contains("hiv")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+                
+                //Use Cheerio to parse the HTML and extract pneumonia article information.
+                $('a:contains("pneumonia")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+
+                //Use Cheerio to parse the HTML and extract psoriasis article information.
+                $('a:contains("psoriasis")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+
+                //Use Cheerio to parse the HTML and extract suicide article information.
+                $('a:contains("suicide")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+
+                //Use Cheerio to parse the HTML and extract tuberculosis article information.
+                $('a:contains("tuberculosis")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+
+                //Use Cheerio to parse the HTML and extract allergies article information.
+                $('a:contains("allergies")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+
+                //Use Cheerio to parse the HTML and extract pregnancy article information.
+                $('a:contains("pregnancy")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+
+                //Use Cheerio to parse the HTML and extract breastcancer article information.
+                $('a:contains("breastcancer")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+
+                //Use Cheerio to parse the HTML and extract stroke article information.
+                $('a:contains("stroke")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+
+                //Use Cheerio to parse the HTML and extract pancreatitis article information.
+                $('a:contains("pancreatitis")', html).each(function () {
+                    const title = $(this).text().trim();
+                    const relativeUrl = $(this).attr('href');
+                    const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                    articles.push({
+                        title: title,
+                        url: absoluteUrl,
+                        source: journal.name
+                    });
+                });
+
             })
             .catch(error => {
                 console.error(error);
@@ -394,32 +378,30 @@ app.get('/news', (req, res) => {
             });
     });
 
+    //Wait for all promises to resolve, then cache the data and send it as a response.
     Promise.all(fetchPromises)
         .then(() => {
+            cache.put(cacheKey, articles, 600 * 1000); //cache for 10 mins
             res.json(articles);
         });
 });
 
 
-//listening out for whenever we visit homepage, then get the respnose json; 
-app.get('/', (req, res) => {
-    res.json('Welcome to my Medical News API')
-})
-
-
-//getting single article
-app.get('/news/:journalId', (req, res) => { // Note the ':' before journalId
+//Define a route for getting articles from a specific journal.
+app.get('/journals/:journalId', (req, res) => { // Note the ':' before journalId
     const journalId = req.params.journalId;
 
     // Find the journal by its name
-    const journal = journals.find(journal => journal.name === journalId);
+    const journal = journals.find(journal => journal.keyword === journalId);
 
     if (!journal) {
         return res.status(404).json({ error: 'Journal not found.' });
     }
 
-    console.log("fetch data:", journalId)
-    axios.get(journal.address)
+    //Generate ur based on journal's keyword
+    const url = generateSearchURL(journal);
+
+    axios.get(url)
         .then(response => {
             const html = response.data;
             const $ = cheerio.load(html);
@@ -427,11 +409,220 @@ app.get('/news/:journalId', (req, res) => { // Note the ':' before journalId
 
             const articles = [];
 
+            //Use Cheerio to parse the HTML and extract rheumatoid arthritis article information.
             $('a:contains("rheumatoid arthritis")', html).each(function () {
                 const title = $(this).text().trim();
                 const relativeUrl = $(this).attr('href');
                 const absoluteUrl = baseUrls[journal.name] + relativeUrl;
 
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract hidradenitis article information.
+            $('a:contains("hidradenitis")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract migraine article information.
+            $('a:contains("migraine")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract diabetes article information.
+            $('a:contains("diabetes")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract hypertension article information.
+            $('a:contains("hypertension")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract asthma article information.
+            $('a:contains("asthma")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract depression article information.
+            $('a:contains("depression")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract hiv article information.
+            $('a:contains("hiv")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract pneumonia article information.
+            $('a:contains("pneumonia")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract psoriasis article information.
+            $('a:contains("psoriasis")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract suicide article information.
+            $('a:contains("suicide")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract tuberculosis article information.
+            $('a:contains("tuberculosis")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract allergies article information.
+            $('a:contains("allergies")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract pregnancy article information.
+            $('a:contains("pregnancy")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract breastcancer article information.
+            $('a:contains("breastcancer")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract stroke article information.
+            $('a:contains("stroke")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
+
+                articles.push({
+                    title: title,
+                    url: absoluteUrl,
+                    source: journal.name
+                });
+            });
+
+            //Use Cheerio to parse the HTML and extract pancreatitis article information.
+            $('a:contains("pancreatitis")', html).each(function () {
+                const title = $(this).text().trim();
+                const relativeUrl = $(this).attr('href');
+                const absoluteUrl = baseUrls[journal.name] + relativeUrl;
 
                 articles.push({
                     title: title,
@@ -447,8 +638,6 @@ app.get('/news/:journalId', (req, res) => { // Note the ':' before journalId
             res.status(500).json({ error: 'An error occurred while scraping data.' });
         });
 });
-
-//Add more journals (from different articles) to journals array; add base to journals array and then remove it 
 
 
 //listen for any changes on port 3005
