@@ -10,24 +10,47 @@ app.use(bodyParser.json());
 
 const NPI_API_URL = 'https://npiregistry.cms.hhs.gov/api/?version=2.1';
 
-// Function to fetch provider data from NPI API 
-async function fetchProviderData(searchParams) {
+// Function to fetch provider data from the NPI API with pagination
+async function fetchProviderDataFromNPI(searchParams, page = 1, pageSize = 10) {
     try {
-      const response = await axios.get(NPI_API_URL, { params: searchParams });
-      return response.data; // The response contains provider data
+      // Add pagination parameters to the searchParams
+      searchParams.limit = pageSize;
+      searchParams.skip = (page - 1) * pageSize;
+  
+      const response = await axios.get('https://npiregistry.cms.hhs.gov/api/?version=2.1', {
+        params: searchParams,
+      });
+      return response.data;
     } catch (error) {
-      //Handle errors sfrom the NPI API
+      // Handle errors from the NPI API
       if (error.response) {
         const statusCode = error.response.status;
-        const errorMessage = error.repsone.data || "NPI API error";
-
-        //respond with an appropriate status code and error message
+        const errorMessage = error.response.data || 'NPI API error';
+  
+        // Respond with an appropriate status code and error message
         return { error: errorMessage, status: statusCode };
       } else {
-        //handle other types of errors, such as network issues
+        // Handle other types of errors, such as network issues
         throw error;
       }
     }
+}
+
+// Function to validate and sanitize page and pageSize values
+function validatePaginationParams(page, pageSize) {
+    // Ensure page and pageSize are positive integers
+    page = parseInt(page);
+    pageSize = parseInt(pageSize);
+  
+    if (isNaN(page) || page <= 0) {
+      page = 1; // Default to page 1 if page is invalid
+    }
+  
+    if (isNaN(pageSize) || pageSize <= 0) {
+      pageSize = 10; // Default to pageSize 10 if pageSize is invalid
+    }
+  
+    return { page, pageSize };
 }
 
 // Function to validate search parameters
@@ -159,9 +182,18 @@ app.get('/providers/search', async (req, res) => {
       if (providerData.error) {
         res.status(providerData.status || 500).json({ error: providerData.error });
       } else {
-        // Return the provider data to the client
-        res.json(providerData);
-      }
+        // Return the provider data along with pagination information to the client
+        const totalResults = providerData.result_count || 0;
+        const totalPages = Math.ceil(totalResults / validatedPageSize);
+
+        res.json({
+            results: providerData.results,
+            page: validatedPage,
+            pageSize: validatedPageSize,
+            totalResults,
+            totalPages,
+        });
+        }
     } catch (error) {
       // Handle other potential errors, such as validation errors or network issues
       res.status(500).json({ error: 'An unexpected error occurred' });
