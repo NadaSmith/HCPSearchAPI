@@ -2,6 +2,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const rateLimit = require('express-rate-limit');
 const axios = require('axios');
+const redis = requier('redis');
+const client = redis.createClient();
+
+
 
 const app = express();
 const port = process.env.PORT || 3000; 
@@ -16,32 +20,48 @@ const limiter = rateLimit({
 app.use(bodyParser.json());
 app.use('/providers/search', limiter);
 
-const NPI_API_URL = 'https://npiregistry.cms.hhs.gov/api/?version=2.1';
+client.on('error', (error) => {
+    console.error('Redis Error:', error);
+})
 
-// Function to fetch provider data from the NPI API with pagination
-async function fetchProviderDataFromNPI(searchParams, page = 1, pageSize = 10) {
-    try {
-      // Add pagination parameters to the searchParams
-      searchParams.limit = pageSize;
-      searchParams.skip = (page - 1) * pageSize;
+// Function to fetch provider data from the NPI API with caching
+async function fetchProviderDataFromNPI(searchParams) {
+    const cacheKey = JSON.stringify(searchParams);
   
-      const response = await axios.get('https://npiregistry.cms.hhs.gov/api/?version=2.1', {
-        params: searchParams,
-      });
-      return response.data;
-    } catch (error) {
-      // Handle errors from the NPI API
-      if (error.response) {
-        const statusCode = error.response.status;
-        const errorMessage = error.response.data || 'NPI API error';
-  
-        // Respond with an appropriate status code and error message
-        return { error: errorMessage, status: statusCode };
-      } else {
-        // Handle other types of errors, such as network issues
-        throw error;
+    // Check if the data is cached
+    client.get(cacheKey, async (err, cachedData) => {
+      if (err) {
+        console.error('Redis Cache Error:', err);
       }
-    }
+  
+      if (cachedData) {
+        // Data is in the cache, return it
+        return JSON.parse(cachedData);
+      } else {
+        try {
+          const response = await axios.get('https://npiregistry.cms.hhs.gov/api/?version=2.1', {
+            params: searchParams,
+          });
+  
+          // Store the data in the cache for future use (with an expiration time, if needed)
+          client.setex(cacheKey, 3600, JSON.stringify(response.data)); // Cache data for 1 hour
+  
+          return response.data;
+        } catch (error) {
+          // Handle errors from the NPI API
+          if (error.response) {
+            const statusCode = error.response.status;
+            const errorMessage = error.response.data || 'NPI API error';
+  
+            // Respond with an appropriate status code and error message
+            return { error: errorMessage, status: statusCode };
+          } else {
+            // Handle other types of errors, such as network issues
+            throw error;
+          }
+        }
+      }
+    });
 }
 
 // Function to validate and sanitize page and pageSize values
