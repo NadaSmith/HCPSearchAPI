@@ -1,12 +1,20 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const rateLimit = require('express-rate-limit');
 const axios = require('axios');
 
 const app = express();
 const port = process.env.PORT || 3000; 
 
 // Define your middleware here
+
+// Create a rate limiter
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+});
 app.use(bodyParser.json());
+app.use('/providers/search', limiter);
 
 const NPI_API_URL = 'https://npiregistry.cms.hhs.gov/api/?version=2.1';
 
