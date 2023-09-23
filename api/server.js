@@ -30,6 +30,67 @@ async function fetchProviderData(searchParams) {
     }
 }
 
+// Function to validate search parameters
+function validateSearchParams(params) {
+    const errors = {};
+  
+    // Validate age
+    if (params.age !== undefined) {
+        const age = parseInt(params.age);
+        if (isNaN(age) || age < 0) {
+            errors.age = 'Age must be a positive integer';
+        }
+    }
+  
+    // Validate gender 
+    if (params.gender !== undefined) {
+        const gender = ['Male', 'Female', 'Nonbinary'];
+        if (!gender.includes(params.gender)) {
+          errors.gender = 'Gender must be one of: Male, Female, Nonbinary';
+        }
+    }
+
+    // Validate race 
+    if (params.race !== undefined && params.race.trim() === '') {
+        errors.race = 'Race must be a non-empty string';
+        }
+    }
+
+    // Validate language 
+    if (params.language !== undefined) {
+        const language = parseInt(params.language);
+        if (!Array.isArray(params.language) || params.language.some(lang => typeof lang !== "string" || lang.trim() == '')) {
+          errors.language = 'Language must be an array of non-empty strings';
+        }
+    }
+
+    // Validate insurance
+    if (params.insurance !== undefined) {
+        if (!Array.isArray(params.insurance) || params.insurance.some(ins => typeof ins !== 'string' || ins.trim() === '')) {
+          errors.insurance = 'Insurance must be an array of non-empty strings';
+        }
+    }
+
+    // Validate city
+    if (params.city !== undefined) {
+        const city = parseInt(params.city);
+        if (isNaN(city) || city < 0) {
+          errors.city = 'City must be a positive integer';
+        }
+    }
+
+    // Validate state 
+    if (params.state !== undefined) {
+        const state = parseInt(params.state);
+        if (isNaN(state) || state < 0) {
+          errors.state = 'State must be a positive integer';
+        }
+    }
+    
+    return errors;
+};
+
+
 
 // Define your routes to search for providers based on custom criteria
 app.get('/providers',   (req, res) => {
@@ -82,9 +143,15 @@ app.get('/providers',   (req, res) => {
 app.get('/providers/search', async (req, res) => {
     const searchParams = req.query; // Extract search parameters from the query string
   
+    // Validate search parameters
+    const validationErrors = validateSearchParams(searchParams);
+
+    if (Object.keys(validationErrors).length > 0) {
+        // Return validation errors to the client
+        return res.status(400).json({ errors: validationErrors });
+    }
+
     try {
-      // Validate search parameters (you can implement validation logic here)
-  
       // Fetch provider data from the NPI API based on the search parameters
       const providerData = await fetchProviderDataFromNPI(searchParams);
   
